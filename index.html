@@ -23,18 +23,26 @@
 
   .body{ flex:1; padding:2.4vh 4vw; overflow:hidden; display:flex; flex-direction:column; }
   .body h2{ font-size:2.4vh; font-weight:800; color:var(--green-dark); margin-bottom:1.6vh; text-align:center; flex-shrink:0; }
-  .rows{ flex:1; display:flex; flex-direction:column; gap:1.2vh; overflow:hidden; }
 
-  .row{ display:flex; align-items:center; gap:2.2vw; background:#fff; border-radius:1.6vh;
-    padding:0 2.6vw; border:.5vh solid transparent; flex:1 1 0; min-height:0; }
-  .row.first{ flex:1.5 1 0; border-color:var(--gold); }   /* 두께 1.5배 */
-  .row.second{ flex:1.25 1 0; border-color:var(--silver); }  /* 두께 1.25배 */
+  .podium{ flex:1.7; display:flex; align-items:flex-end; justify-content:center; gap:1.6vw; min-height:0; }
+  .pedestal{ display:flex; flex-direction:column; align-items:center; gap:1.6vh; }
+  .pedestal .medal{ width:14vh; height:14vh; flex-shrink:0; }
+  .pedestal .chip{ background:#fff; border-radius:1.2vh; box-shadow:0 .4vh 1vh rgba(0,0,0,.1); white-space:nowrap; }
+  .pedestal .chip span{ font-weight:900; color:var(--ink); display:block; }
+  .pedestal.p1 .chip{ padding:.9vh 1.4vw; }
+  .pedestal.p1 .chip span{ font-size:4vh; }
+  .pedestal.p1 .step{ width:16.3vw; height:14.4vh; background:var(--green-dark); border-radius:1.6vh 1.6vh 0 0; }
+  .pedestal.p2 .chip{ padding:.8vh 1.3vw; }
+  .pedestal.p2 .chip span{ font-size:3.1vh; }
+  .pedestal.p2 .step{ width:13.8vw; height:8.9vh; background:#3E7029; border-radius:1.6vh 1.6vh 0 0; }
 
-  .rank{ width:4.6vh; height:4.6vh; border-radius:50%; background:var(--green); color:#fff;
-    font-size:2.1vh; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .rank.gold{ background:var(--gold); }
-  .rank.silver{ background:var(--silver); }
-  .rank.empty{ background:rgba(122,193,66,.15); color:var(--green); }
+  .rows{ flex:1.3; display:flex; flex-direction:column; gap:1.2vh; overflow:hidden; margin-top:1.2vh; }
+  .row{ display:flex; align-items:center; gap:1.6vh; background:#fff; border-radius:1.6vh;
+    padding:0 1.8vh; border:.15vh solid #E3ECDD; flex:1 1 0; min-height:0; }
+
+  .rank{ width:4.2vh; height:4.2vh; border-radius:50%; background:var(--green); color:#fff;
+    font-size:1.9vh; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .rank .dash{ font-size:3.4vh; line-height:1; }
 
   .name{ font-size:3vh; font-weight:800; color:var(--ink); flex:1; }
 
@@ -50,6 +58,7 @@
   </div>
   <div class="body">
     <h2>부서별 참여순위</h2>
+    <div class="podium" id="podium"></div>
     <div class="rows" id="rows"><div class="empty-state">불러오는 중…</div></div>
   </div>
 </div>
@@ -67,7 +76,7 @@
    3. 형식을 "쉼표로 구분된 값(.csv)"으로 선택
    4. 게시 → 뜨는 링크를 복사해서 아래 CSV_URL 자리에 붙여넣기
    ============================================================================ */
-const CSV_URL = 'https://steep-dew-2106.bery816.workers.dev';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/여기에_본인_게시_ID/pub?gid=0&single=true&output=csv';
 
 const REFRESH_MS = 15000;   // 순위 자동 새로고침 주기
 
@@ -98,20 +107,42 @@ function parseCsv(text){
   return rows;
 }
 
-function renderRows(stats){
-  const rowsEl = document.getElementById('rows');
-  if(!stats || stats.length === 0){ rowsEl.innerHTML = '<div class="empty-state">부서 정보가 없어요</div>'; return; }
+function medalSvg(color, num){
+  return `<svg class="medal" viewBox="0 0 100 100">
+    <path d="M38 30 L24 6 L34 6 L46 30 Z" fill="#2F5A1F"/>
+    <path d="M62 30 L76 6 L66 6 L54 30 Z" fill="#2F5A1F"/>
+    <circle cx="50" cy="58" r="34" fill="${color}" stroke="#2F5A1F" stroke-width="3"/>
+    <circle cx="50" cy="58" r="26" fill="none" stroke="#ffffff" stroke-opacity=".4" stroke-width="2"/>
+    <text x="50" y="70" font-size="34" font-weight="900" fill="#1F2A1A" text-anchor="middle">${num}</text>
+  </svg>`;
+}
 
-  rowsEl.innerHTML = stats.map(function(s){
-    let rowClass = 'row';
-    let badgeClass = '';
-    if(s.rank === 1){ rowClass += ' first'; badgeClass = 'gold'; }
-    else if(s.rank === 2){ rowClass += ' second'; badgeClass = 'silver'; }
-    const rankLabel = s.rank ? s.rank : '\u2013';
-    const emptyClass = s.rank ? '' : 'empty';
+function renderPodium(first, second){
+  const podiumEl = document.getElementById('podium');
+  const goldName = first ? escapeHtml(first.dept) : '–';
+  const silverName = second ? escapeHtml(second.dept) : '–';
+  podiumEl.innerHTML = `
+    <div class="pedestal p1">
+      ${medalSvg('#E3B341', '1')}
+      <div class="chip"><span>${goldName}</span></div>
+      <div class="step"></div>
+    </div>
+    <div class="pedestal p2">
+      ${medalSvg('#A9AFB8', '2')}
+      <div class="chip"><span>${silverName}</span></div>
+      <div class="step"></div>
+    </div>`;
+}
+
+function renderList(rest){
+  const rowsEl = document.getElementById('rows');
+  if(!rest || rest.length === 0){ rowsEl.innerHTML = '<div class="empty-state">부서 정보가 없어요</div>'; return; }
+
+  rowsEl.innerHTML = rest.map(function(s){
+    const rankLabel = s.rank ? s.rank : '<span class="dash">–</span>';
     return `
-    <div class="${rowClass}">
-      <div class="rank ${badgeClass} ${emptyClass}">${rankLabel}</div>
+    <div class="row">
+      <div class="rank">${rankLabel}</div>
       <div class="name">${escapeHtml(s.dept)}</div>
     </div>`;
   }).join('');
@@ -142,7 +173,12 @@ function loadRanking(){
       withAvg.forEach(function(p, i){ p.rank = i + 1; });
       withoutAvg.forEach(function(p){ p.rank = null; });
 
-      renderRows(withAvg.concat(withoutAvg));
+      const stats = withAvg.concat(withoutAvg);
+      const first = stats.find(function(s){ return s.rank === 1; });
+      const second = stats.find(function(s){ return s.rank === 2; });
+      const rest = stats.filter(function(s){ return s.rank !== 1 && s.rank !== 2; });
+      renderPodium(first, second);
+      renderList(rest);
       document.getElementById('updated').textContent = '마지막 업데이트 ' + new Date().toLocaleTimeString('ko-KR');
     })
     .catch(function(err){
