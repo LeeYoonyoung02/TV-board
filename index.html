@@ -49,6 +49,27 @@
   .name{ font-size:3vh; font-weight:800; color:var(--ink); flex:1; }
   .empty-state{ text-align:center; color:var(--ink-soft); font-size:2vh; padding:4vh 0; }
 
+  /* H2 : 아이콘 + 제목 + 오른쪽 가는 선 */
+  .t-f.h-2 .sec-head .ico{ width:calc(var(--u) * 3.2); height:calc(var(--u) * 3.2); border-radius:calc(var(--u) * 1); background:#D9EDC5; color:var(--green-dark); }
+  .t-f.h-2 .sec-head .ico svg{ width:calc(var(--u) * 1.95); height:calc(var(--u) * 1.95); }
+  .t-f.h-2 .sec-head::after{ content:''; flex:1; height:calc(var(--u) * .14); background:#C9DCB8; border-radius:calc(var(--u) * 1); margin-left:calc(var(--u) * .4); }
+  /* H3 : 진한 초록 알약 라벨 */
+  .t-f.h-3 .sec-head{ width:fit-content; background:var(--green-dark); border-radius:calc(var(--u) * 99); padding:calc(var(--u) * .5) calc(var(--u) * 1.6) calc(var(--u) * .5) calc(var(--u) * .55); gap:calc(var(--u) * .8); }
+  .t-f.h-3 .sec-head .ico{ width:calc(var(--u) * 2.8); height:calc(var(--u) * 2.8); background:rgba(255,255,255,.16); color:#DDF3C2; }
+  .t-f.h-3 .sec-head .ico svg{ width:calc(var(--u) * 1.7); height:calc(var(--u) * 1.7); }
+  .t-f.h-3 .sec-head .ttl{ color:#fff; font-size:calc(var(--u) * 2.05); }
+  /* H4 : 연한 초록 띠 (풀폭) */
+  .t-f.h-4 .sec-head{ background:#E8F4DB; border-radius:calc(var(--u) * 1.1); padding:calc(var(--u) * .55) calc(var(--u) * 1.1); gap:calc(var(--u) * .8); }
+  .t-f.h-4 .sec-head .ico{ width:calc(var(--u) * 2.6); height:calc(var(--u) * 2.6); background:transparent; color:var(--green-dark); border-radius:0; }
+  .t-f.h-4 .sec-head .ico svg{ width:calc(var(--u) * 2.5); height:calc(var(--u) * 2.5); }
+  .t-f.h-4 .sec-head .ttl{ color:var(--green-dark); }
+  /* H5 : 리본 태그 (메달 리본과 같은 진한 초록, 오른쪽 화살촉) */
+  .t-f.h-5 .sec-head{ width:fit-content; background:var(--green-dark); padding:calc(var(--u) * .55) calc(var(--u) * 3.2) calc(var(--u) * .55) calc(var(--u) * 1.2); gap:calc(var(--u) * .8);
+    border-radius:calc(var(--u) * .7) 0 0 calc(var(--u) * .7); clip-path:polygon(0 0, calc(100% - calc(var(--u) * 1.6)) 0, 100% 50%, calc(100% - calc(var(--u) * 1.6)) 100%, 0 100%); }
+  .t-f.h-5 .sec-head .ico{ width:calc(var(--u) * 2.6); height:calc(var(--u) * 2.6); background:transparent; color:#D3F0AE; border-radius:0; }
+  .t-f.h-5 .sec-head .ico svg{ width:calc(var(--u) * 2.4); height:calc(var(--u) * 2.4); }
+  .t-f.h-5 .sec-head .ttl{ color:#fff; font-size:calc(var(--u) * 2.05); }
+
   .info{ --u:calc(1vh * var(--is, 1)); flex:1; min-width:0; min-height:0; display:flex; flex-direction:column;
     justify-content:space-between; gap:calc(var(--u) * 1); }
   .info > *{ flex-shrink:0; }
@@ -135,7 +156,7 @@
   .t-f .when{ background:var(--cream); border:calc(var(--u) * .13) solid var(--cream-bd); border-radius:calc(var(--u) * 99); padding:calc(var(--u) * .55) calc(var(--u) * 1); margin-top:calc(var(--u) * .7); }
 </style>
 </head>
-<body class="t-f">
+<body class="t-f h-5">
 <div class="board">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol><symbol id="i-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol><symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol><symbol id="i-qr" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol><symbol id="i-idcard" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></symbol><symbol id="i-stretch" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M12 8.5V15"/><path d="M6 3.5 12 9l6-5.5"/><path d="m12 15-3.5 6"/><path d="m12 15 3.5 6"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol><symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-1.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98 1.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></symbol></svg>
   <div class="header">
@@ -155,7 +176,7 @@
     <div class="info">
 
       <section class="sec camp">
-        <h3 class="sec-head"><span class="ico"><svg class="i " viewBox="0 0 24 24"><use href="#i-megaphone"/></svg></span><span class="ttl">캠페인 내용 및 참여 방법</span></h3>
+        <h3 class="sec-head"><span class="ico"><svg class="i " viewBox="0 0 24 24"><use href="#i-megaphone"/></svg></span><span class="ttl">안전보건 스트레칭 캠페인 및 이벤트 진행</span></h3>
         <div class="sec-body">
           <p class="lead">근골격계 질환 예방 및 활력 있는 일터 조성을 위한 안전보건 스트레칭 캠페인 진행</p>
           <div class="kvrow">
@@ -207,7 +228,7 @@
 
       <div class="banner">
         <span class="bi"><svg class="i " viewBox="0 0 24 24"><use href="#i-heart"/></svg></span>
-        <span class="bt"><span class="l1">안전하고 건강한 일터를 위해</span><span class="l2">근로자분들의 많은 관심과 적극적인 캠페인 참여 바랍니다!</span></span>
+        <span class="bt"><span class="l1">안전하고 건강한 일터를 위해</span><span class="l2">근로자분들의 많은 관심과 적극적인 참여 바랍니다!</span></span>
       </div>
     </div>
   </div>
