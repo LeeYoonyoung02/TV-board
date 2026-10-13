@@ -19,6 +19,7 @@
 
   .header{ background:#fff; padding:1.5vh 3vw 1.2vh; text-align:center; flex-shrink:0; position:relative; }
   .header .updated{ position:absolute; top:1.2vh; right:2.2vw; font-size:1.3vh; color:#8FA084; font-weight:600; }
+  .header .updated.stale{ color:#B7791F; }
   .header img{ display:block; margin:0 auto .7vh; max-height:6vh; width:auto; max-width:70vw; height:auto; }
   .header h1{ font-size:3.4vh; font-weight:900; color:var(--ink); }
   .header .subtitle{ margin-top:.6vh; }
@@ -180,7 +181,7 @@
         <div class="sec-body">
           <p class="lead">근골격계 질환 예방 및 활력 있는 일터 조성을 위한 안전보건 스트레칭 캠페인 진행</p>
           <div class="kvrow">
-            <div class="kv"><span class="k"><svg class="i " viewBox="0 0 24 24"><use href="#i-cal"/></svg>일정</span><span>2026.09.14 ~ 2026.10.14 (1개월)</span></div>
+            <div class="kv"><span class="k"><svg class="i " viewBox="0 0 24 24"><use href="#i-cal"/></svg>일정</span><span>2026.09.14 ~ 2026.10.18</span></div>
             <div class="kv"><span class="k"><svg class="i " viewBox="0 0 24 24"><use href="#i-pin"/></svg>진행 장소</span><span>위생전실 내 스트레칭 존</span></div>
           </div>
         </div>
@@ -316,14 +317,67 @@ function renderList(rest){
 }
 
 // stats = [{dept, rank}, ...]  (rank 1,2,3… / 참여 없는 부서는 rank:null)
-function renderAll(stats){
-  stats = stats || [];
+function showStats(stats){
   const first = stats.find(function(s){ return s.rank === 1; });
   const second = stats.find(function(s){ return s.rank === 2; });
   const rest = stats.filter(function(s){ return s.rank !== 1 && s.rank !== 2; });
   renderPodium(first, second);
   renderList(rest);
-  document.getElementById('updated').textContent = '마지막 업데이트 ' + new Date().toLocaleTimeString('ko-KR');
+}
+
+/* ── 연결이 끊겨도 화면 유지 ───────────────────────────────────────────
+   · 정상으로 받은 마지막 순위를 이 기기에 저장해 두고(localStorage)
+   · 새로 받은 데이터가 이상하거나(오류 페이지·빈 응답) 연결이 끊기면 → 화면은 그대로 두고
+   · 화면을 새로 열었을 때도 저장해 둔 마지막 순위를 먼저 보여줌                                 */
+const CACHE_KEY = 'tvboard.lastGood.v1';
+let lastGoodTime = null;
+
+function isValidStats(stats){
+  return Array.isArray(stats) && stats.length > 0 &&
+    stats.every(function(s){ return s && typeof s.dept === 'string' && s.dept.length > 0; });
+}
+function saveCache(stats, t){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ t: t, stats: stats })); }catch(e){}
+}
+function loadCache(){
+  try{
+    const o = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if(o && isValidStats(o.stats) && o.t) return o;
+  }catch(e){}
+  return null;
+}
+function fmtTime(t){
+  const d = new Date(t), now = new Date();
+  const time = d.toLocaleTimeString('ko-KR');
+  return d.toDateString() === now.toDateString() ? time : (d.getMonth()+1) + '/' + d.getDate() + ' ' + time;
+}
+function setStatus(live){
+  const el = document.getElementById('updated');
+  el.textContent = lastGoodTime ? '마지막 업데이트 ' + fmtTime(lastGoodTime) : '';
+  el.classList.toggle('stale', !live);   // 연결이 안 될 땐 글자만 옅은 주황색 (화면 내용은 그대로)
+}
+
+// 정상 데이터를 받았을 때
+function onData(stats){
+  if(!isValidStats(stats)){ onFail(new Error('invalid data')); return; }
+  lastGoodTime = Date.now();
+  showStats(stats);
+  saveCache(stats, lastGoodTime);
+  setStatus(true);
+}
+// 실패했거나 이상한 데이터를 받았을 때 — 화면을 건드리지 않음
+function onFail(err){
+  if(window.console) console.warn('데이터 갱신 실패(화면 유지):', err);
+  setStatus(false);
+}
+// 화면을 처음 열 때 — 저장해 둔 마지막 순위가 있으면 바로 보여줌
+function showCached(){
+  const c = loadCache();
+  if(!c) return false;
+  lastGoodTime = c.t;
+  showStats(c.stats);
+  setStatus(false);
+  return true;
 }
 
 window.addEventListener('resize', function(){ if(document.querySelector('#podium .stand')) layoutPodium(); });
@@ -350,6 +404,7 @@ window.addEventListener('load', fitInfo);
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(fitInfo); }
 fitInfo();
 
+
 // 아주 단순한 CSV 파서 — 큰따옴표로 감싼 필드(쉼표 포함 가능)도 처리합니다.
 function parseCsv(text){
   const rows = [];
@@ -373,44 +428,65 @@ function parseCsv(text){
   return rows;
 }
 
+// 받은 CSV 를 순위 목록으로 바꿈. 구글 오류 화면·로그인 화면·빈 응답처럼 '요약 탭 형식'이 아니면 null (→ 화면 유지)
+function parseStats(text){
+  const table = parseCsv(text);
+  if(table.length < 2) return null;
+  const head = table[0].join(',');
+  if(head.indexOf('부서') === -1 || head.indexOf('평균') === -1) return null;
+
+  // 헤더: 순위 | 부서 | 부서 인원수(...) | 1인당 평균(회) | ...
+  const posCol = 0, deptCol = 1, avgCol = 3;
+  const parsed = table.slice(1)
+    .filter(function(r){ return r.length > avgCol && r[deptCol]; })
+    .map(function(r){
+      return { pos: parseInt(r[posCol], 10) || 9999, dept: r[deptCol], avg: parseFloat(r[avgCol]) || 0 };
+    });
+  if(parsed.length === 0) return null;
+
+  // 요약 탭의 '순위' 열은 소수점을 반올림하기 전 정확한 값으로 매긴 순서입니다.
+  // 화면에서 반올림된 평균으로 다시 정렬하면 근소한 차이가 동점으로 뭉개지므로, 이 순서를 그대로 따릅니다.
+  const withAvg = parsed.filter(function(p){ return p.avg > 0; })
+    .sort(function(a,b){ return a.pos - b.pos; });
+  const withoutAvg = parsed.filter(function(p){ return p.avg <= 0; })
+    .sort(function(a,b){ return a.dept.localeCompare(b.dept, 'ko'); });
+
+  withAvg.forEach(function(p, i){ p.rank = i + 1; });
+  withoutAvg.forEach(function(p){ p.rank = null; });
+  return withAvg.concat(withoutAvg).map(function(p){ return { dept: p.dept, rank: p.rank }; });
+}
+
+let reqSeq = 0, appliedSeq = 0;
 function loadRanking(){
+  const mine = ++reqSeq;
   const bust = CSV_URL + (CSV_URL.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now();
-  fetch(bust, { cache: 'no-store' })
+  // 인터넷이 끊기지는 않았는데 응답이 안 오는 경우를 대비해 12초가 지나면 포기하고 다음 주기를 기다림
+  const ctrl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 12000);
+  fetch(bust, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
     .then(function(r){
       if(!r.ok) throw new Error('CSV 응답 오류: ' + r.status);
       return r.text();
     })
     .then(function(text){
-      const table = parseCsv(text);
-      // 헤더: 순위 | 부서 | 부서 인원수(...) | 1인당 평균(회) | ...
-      const posCol = 0, deptCol = 1, avgCol = 3;
-      const parsed = table.slice(1)
-        .filter(function(r){ return r.length > avgCol && r[deptCol]; })
-        .map(function(r){
-          return { pos: parseInt(r[posCol], 10) || 9999, dept: r[deptCol], avg: parseFloat(r[avgCol]) || 0 };
-        });
-
-      // 요약 탭의 '순위' 열은 소수점을 반올림하기 전 정확한 값으로 매긴 순서입니다.
-      // 화면에서 반올림된 평균으로 다시 정렬하면 근소한 차이가 동점으로 뭉개지므로, 이 순서를 그대로 따릅니다.
-      const withAvg = parsed.filter(function(p){ return p.avg > 0; })
-        .sort(function(a,b){ return a.pos - b.pos; });
-      const withoutAvg = parsed.filter(function(p){ return p.avg <= 0; })
-        .sort(function(a,b){ return a.dept.localeCompare(b.dept, 'ko'); });
-
-      withAvg.forEach(function(p, i){ p.rank = i + 1; });
-      withoutAvg.forEach(function(p){ p.rank = null; });
-
-      renderAll(withAvg.concat(withoutAvg));
+      clearTimeout(timer);
+      if(mine < appliedSeq) return;          // 더 최신 응답이 이미 반영됐으면 무시
+      const stats = parseStats(text);
+      if(!stats) throw new Error('요약 탭 형식이 아닌 응답');
+      appliedSeq = mine;
+      onData(stats);
     })
-    .catch(function(err){
-      console.error(err);
-      document.getElementById('updated').textContent = '업데이트 실패 (' + new Date().toLocaleTimeString('ko-KR') + ')';
-    });
+    .catch(function(err){ clearTimeout(timer); onFail(err); });
 }
 
 function init(){
+  showCached();
   loadRanking();
   setInterval(loadRanking, REFRESH_MS);
+  // 화면을 닫았다 열거나 인터넷이 다시 연결되면 기다리지 않고 바로 갱신
+  window.addEventListener('online', loadRanking);
+  // 인터넷이 끊긴 채 화면을 새로고침해도 열리도록 '화면 저장 파일'(sw.js)을 등록 — 같은 폴더에 sw.js 가 없으면 조용히 건너뜀
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(function(){}); }
 }
 
 init();
